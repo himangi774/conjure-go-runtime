@@ -14,6 +14,8 @@
 
 package httpclient
 
+//go:refreshable ServicesConfig
+
 import (
 	"bytes"
 	"io/ioutil"
