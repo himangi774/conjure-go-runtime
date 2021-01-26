@@ -3,8 +3,6 @@
 package httpclient
 
 import (
-	"time"
-
 	refreshable "github.com/palantir/pkg/refreshable"
 )
 
@@ -68,14 +66,14 @@ type RefreshableClientConfig interface {
 	ProxyFromEnvironment() refreshable.BoolPtr
 	ProxyURL() refreshable.StringPtr
 	MaxNumRetries() refreshable.IntPtr
-	InitialBackoff() RefreshableDurationPtr
-	MaxBackoff() RefreshableDurationPtr
-	ConnectTimeout() RefreshableDurationPtr
-	ReadTimeout() RefreshableDurationPtr
-	WriteTimeout() RefreshableDurationPtr
-	IdleConnTimeout() RefreshableDurationPtr
-	TLSHandshakeTimeout() RefreshableDurationPtr
-	ExpectContinueTimeout() RefreshableDurationPtr
+	InitialBackoff() refreshable.DurationPtr
+	MaxBackoff() refreshable.DurationPtr
+	ConnectTimeout() refreshable.DurationPtr
+	ReadTimeout() refreshable.DurationPtr
+	WriteTimeout() refreshable.DurationPtr
+	IdleConnTimeout() refreshable.DurationPtr
+	TLSHandshakeTimeout() refreshable.DurationPtr
+	ExpectContinueTimeout() refreshable.DurationPtr
 	MaxIdleConns() refreshable.IntPtr
 	MaxIdleConnsPerHost() refreshable.IntPtr
 	Metrics() RefreshableMetricsConfig
@@ -154,50 +152,50 @@ func (r RefreshingClientConfig) MaxNumRetries() refreshable.IntPtr {
 	}))
 }
 
-func (r RefreshingClientConfig) InitialBackoff() RefreshableDurationPtr {
-	return NewRefreshingDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
+func (r RefreshingClientConfig) InitialBackoff() refreshable.DurationPtr {
+	return refreshable.NewDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
 		return i.InitialBackoff
 	}))
 }
 
-func (r RefreshingClientConfig) MaxBackoff() RefreshableDurationPtr {
-	return NewRefreshingDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
+func (r RefreshingClientConfig) MaxBackoff() refreshable.DurationPtr {
+	return refreshable.NewDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
 		return i.MaxBackoff
 	}))
 }
 
-func (r RefreshingClientConfig) ConnectTimeout() RefreshableDurationPtr {
-	return NewRefreshingDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
+func (r RefreshingClientConfig) ConnectTimeout() refreshable.DurationPtr {
+	return refreshable.NewDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
 		return i.ConnectTimeout
 	}))
 }
 
-func (r RefreshingClientConfig) ReadTimeout() RefreshableDurationPtr {
-	return NewRefreshingDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
+func (r RefreshingClientConfig) ReadTimeout() refreshable.DurationPtr {
+	return refreshable.NewDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
 		return i.ReadTimeout
 	}))
 }
 
-func (r RefreshingClientConfig) WriteTimeout() RefreshableDurationPtr {
-	return NewRefreshingDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
+func (r RefreshingClientConfig) WriteTimeout() refreshable.DurationPtr {
+	return refreshable.NewDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
 		return i.WriteTimeout
 	}))
 }
 
-func (r RefreshingClientConfig) IdleConnTimeout() RefreshableDurationPtr {
-	return NewRefreshingDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
+func (r RefreshingClientConfig) IdleConnTimeout() refreshable.DurationPtr {
+	return refreshable.NewDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
 		return i.IdleConnTimeout
 	}))
 }
 
-func (r RefreshingClientConfig) TLSHandshakeTimeout() RefreshableDurationPtr {
-	return NewRefreshingDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
+func (r RefreshingClientConfig) TLSHandshakeTimeout() refreshable.DurationPtr {
+	return refreshable.NewDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
 		return i.TLSHandshakeTimeout
 	}))
 }
 
-func (r RefreshingClientConfig) ExpectContinueTimeout() RefreshableDurationPtr {
-	return NewRefreshingDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
+func (r RefreshingClientConfig) ExpectContinueTimeout() refreshable.DurationPtr {
+	return refreshable.NewDurationPtr(r.MapClientConfig(func(i ClientConfig) interface{} {
 		return i.ExpectContinueTimeout
 	}))
 }
@@ -224,68 +222,6 @@ func (r RefreshingClientConfig) Security() RefreshableSecurityConfig {
 	return NewRefreshingSecurityConfig(r.MapClientConfig(func(i ClientConfig) interface{} {
 		return i.Security
 	}))
-}
-
-type RefreshableDurationPtr interface {
-	refreshable.Refreshable
-	CurrentDurationPtr() *time.Duration
-	MapDurationPtr(func(*time.Duration) interface{}) refreshable.Refreshable
-	SubscribeToDurationPtr(func(*time.Duration)) (unsubscribe func())
-}
-
-type RefreshingDurationPtr struct {
-	refreshable.Refreshable
-}
-
-func NewRefreshingDurationPtr(in refreshable.Refreshable) RefreshingDurationPtr {
-	return RefreshingDurationPtr{Refreshable: in}
-}
-
-func (r RefreshingDurationPtr) CurrentDurationPtr() *time.Duration {
-	return r.Current().(*time.Duration)
-}
-
-func (r RefreshingDurationPtr) MapDurationPtr(mapFn func(*time.Duration) interface{}) refreshable.Refreshable {
-	return r.Map(func(i interface{}) interface{} {
-		return mapFn(i.(*time.Duration))
-	})
-}
-
-func (r RefreshingDurationPtr) SubscribeToDurationPtr(consumer func(*time.Duration)) (unsubscribe func()) {
-	return r.Subscribe(func(i interface{}) {
-		consumer(i.(*time.Duration))
-	})
-}
-
-type RefreshableDuration interface {
-	refreshable.Refreshable
-	CurrentDuration() time.Duration
-	MapDuration(func(time.Duration) interface{}) refreshable.Refreshable
-	SubscribeToDuration(func(time.Duration)) (unsubscribe func())
-}
-
-type RefreshingDuration struct {
-	refreshable.Refreshable
-}
-
-func NewRefreshingDuration(in refreshable.Refreshable) RefreshingDuration {
-	return RefreshingDuration{Refreshable: in}
-}
-
-func (r RefreshingDuration) CurrentDuration() time.Duration {
-	return r.Current().(time.Duration)
-}
-
-func (r RefreshingDuration) MapDuration(mapFn func(time.Duration) interface{}) refreshable.Refreshable {
-	return r.Map(func(i interface{}) interface{} {
-		return mapFn(i.(time.Duration))
-	})
-}
-
-func (r RefreshingDuration) SubscribeToDuration(consumer func(time.Duration)) (unsubscribe func()) {
-	return r.Subscribe(func(i interface{}) {
-		consumer(i.(time.Duration))
-	})
 }
 
 type RefreshableInt64 interface {
