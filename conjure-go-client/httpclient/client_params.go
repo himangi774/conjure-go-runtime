@@ -225,7 +225,7 @@ func WithHTTPTimeout(timeout time.Duration) ClientOrHTTPClientParam {
 // the transport with http2.ConfigureTransport.
 func WithDisableHTTP2() ClientOrHTTPClientParam {
 	return clientOrHTTPClientParamFunc(func(b *httpClientBuilder) error {
-		b.DisableHTTP2 = true
+		b.DisableHTTP2 = refreshable.NewBoolPtr(refreshable.NewDefaultRefreshable(boolP(true)))
 		return nil
 	})
 }
@@ -445,6 +445,7 @@ func WithRefreshableConfig(config RefreshableClientConfig) ClientParam {
 		}
 		// set refreshables
 		b.uris = config.URIs()
+		b.DisableHTTP2 = config.DisableHTTP2()
 		return nil
 	})
 }

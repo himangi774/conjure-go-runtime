@@ -35,6 +35,7 @@ func TestBuilder(t *testing.T) {
 	refreshableCfg := refreshable.NewDefaultRefreshable(ClientConfig{
 		ServiceName: "test",
 		URIs:        []string{testAddr},
+		DisableHTTP2: boolP(false),
 	})
 
 	for _, test := range []struct {
@@ -117,12 +118,18 @@ func TestBuilder(t *testing.T) {
 				assert.Equal(t, []string{testAddr}, client.uris.CurrentStringSlice())
 				// update the client config with a new URI
 				newConfig := ClientConfig{
-					ServiceName: "test",
-					URIs:        []string{"https://changed-uri.local"},
+					ServiceName:  "test",
+					URIs:         []string{"https://changed-uri.local"},
+					DisableHTTP2: boolP(true),
 				}
+				transport := unwrapTransport(client.client.Transport)
+				assert.Contains(t, transport.TLSClientConfig.NextProtos, "h2")
 				err := refreshableCfg.Update(newConfig)
 				require.NoError(t, err)
+				transport = unwrapTransport(client.client.Transport)
+				assert.NotContains(t, transport.TLSClientConfig.NextProtos, "h2")
 				assert.Equal(t, newConfig.URIs, client.uris.CurrentStringSlice(), "client URIs should be updated with the refreshed values")
+
 			},
 		},
 	} {
