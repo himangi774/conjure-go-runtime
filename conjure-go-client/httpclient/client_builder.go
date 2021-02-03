@@ -59,7 +59,7 @@ type httpClientBuilder struct {
 	Proxy                 func(*http.Request) (*url.URL, error)
 	ProxyDialerBuilder    func(*net.Dialer) (proxy.Dialer, error)
 	TLSClientConfig       *tls.Config
-	DisableHTTP2          bool
+	DisableHTTP2          refreshable.Bool
 	DisableRecovery       bool
 	DisableTracing        bool
 	DisableKeepAlives     bool
@@ -132,7 +132,7 @@ func getDefaultHTTPClientBuilder() *httpClientBuilder {
 		DialTimeout:           30 * time.Second,
 		KeepAlive:             30 * time.Second,
 		EnableIPV6:            false,
-		DisableHTTP2:          false,
+		DisableHTTP2:          refreshable.NewBool(refreshable.NewDefaultRefreshable(false)),
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
@@ -187,7 +187,7 @@ func httpClientAndRoundTripHandlersFromBuilder(b *httpClientBuilder) (*http.Clie
 	if b.Proxy != nil && b.ProxyDialerBuilder == nil {
 		transport.Proxy = b.Proxy
 	}
-	if !b.DisableHTTP2 {
+	if !b.DisableHTTP2.CurrentBool() {
 		if err := http2.ConfigureTransport(transport); err != nil {
 			return nil, nil, werror.Wrap(err, "failed to configure transport for http2")
 		}
@@ -250,4 +250,14 @@ type noopContextDialer struct {
 
 func (n noopContextDialer) DialContext(_ context.Context, network, addr string) (net.Conn, error) {
 	return n.Dial(network, addr)
+}
+
+func boolP(b bool) *bool {
+	return &b
+}
+func intP(i int) *int {
+	return &i
+}
+func stringP(s string) *string {
+	return &s
 }
